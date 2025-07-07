@@ -1,0 +1,7 @@
+langchain
+langchain-ollama
+langchain-openai
+llama-index
+llama-index-llms-openai
+llama-index-agent-openai
+llama-index-llms-ollama
