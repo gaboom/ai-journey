@@ -29,6 +29,7 @@ async def main():
 
             # A proper MCP session involves an initialize message first.
             init_request = {"jsonrpc": "2.0", "method": "initialize", "params": {"mcp_version": "1.0"}, "id": "init"}
+            list_tools_request = {"jsonrpc": "2.0", "method": "list_tools", "params": {}, "id": "list-1"}
             tool_request = {
                 "jsonrpc": "2.0",
                 "method": "tool",
@@ -43,8 +44,9 @@ async def main():
                 log.info(f"Sending: {message}")
                 await process.stdin.send(header + message_bytes)
 
-            # Send both messages
+            # Send all messages in sequence
             await send_message(init_request)
+            await send_message(list_tools_request)
             await send_message(tool_request)
 
             # Close stdin to signal that we are done sending data. This is critical.

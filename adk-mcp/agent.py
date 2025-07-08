@@ -6,26 +6,48 @@ using the ADK command-line tool. For example:
 
 adk run .
 """
+import sys
+import os
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StreamableHTTPConnectionParams
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StdioServerParameters, StdioConnectionParams
 
 # 1. Instantiate the LiteLlm wrapper to connect to the local Ollama model.
 #    The model string must be prefixed with "ollama_chat/"
 local_llm = LiteLlm(model="ollama_chat/llama3.2")
 
-# 2. Configure the MCPToolset to connect to the local Wikipedia MCP server.
-mcp_toolset = MCPToolset(
-    connection_params=StreamableHTTPConnectionParams(
-        url="http://localhost:8080/mcp/"  # Default for FastMCP
-    ),
+# 2. Configure a toolset to launch the mcp_profile.py script via stdio.
+profile_toolset = MCPToolset(
+    connection_params=StdioServerParameters(
+        command=sys.executable,
+        args=["mcp_profile.py"],
+        cwd=os.path.dirname(os.path.abspath(__file__))
+    )
 )
 
-# 3. Define the agent that will use the local LLM and the toolset.
+# 3. Configure a toolset to launch the npx filesystem server.
+#    This exposes the current working directory to the agent.
+filesystem_toolset = MCPToolset(
+    connection_params=StdioConnectionParams(timeout=12, server_params=StdioServerParameters(
+        command="npx",
+        args=["-y", "@modelcontextprotocol/server-filesystem", os.getcwd()]
+    )),
+    tool_filter=["list_directory", "read_file"]
+)
+
+# 4. Configure a toolset to launch the npx Wikipedia server.
+wikipedia_toolset = MCPToolset(
+    connection_params=StdioConnectionParams(timeout=60, server_params=StdioServerParameters(
+        command="npx",
+        args=["-y", "@professional-wiki/mediawiki-mcp-server@latest"]
+    ))
+)
+
+# 5. Define the agent that will use the local LLM and all toolsets.
 #    The variable MUST be named `root_agent` for the ADK to find it.
 root_agent = LlmAgent(
     model=local_llm,
-    name="wikipedia_agent",
-    instruction="Use the wikipedia tools to answer user questions.",
-    tools=[mcp_toolset]
+    name="mcp_stdio_agent",
+    instruction="Good luck.",
+    tools=[profile_toolset, filesystem_toolset, wikipedia_toolset]
 )
