@@ -46,7 +46,8 @@ wikipedia_toolset = MCPToolset(
 # 5. Define the agent that will use the local LLM and all toolsets.
 #    The variable MUST be named `root_agent` for the ADK to find it.
 root_agent = LlmAgent(
-    model=local_llm,
+#    model=local_llm,
+    model="gemini-2.5-flash",
     name="mcp_stdio_agent",
     instruction="Good luck.",
     tools=[profile_toolset, filesystem_toolset, wikipedia_toolset]
