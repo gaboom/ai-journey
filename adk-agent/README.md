@@ -1,6 +1,6 @@
 # Google Agent Development Kit (ADK) MCP Client
 
-This project demonstrates a high-level, declarative approach to building an LLM agent using the Google Agent Development Kit (ADK). The agent is designed to consume tools from an MCP (Model-Context-Protocol) server.
+This project demonstrates a high-level, declarative approach to building an LLM agent using the Google Agent Development Kit (ADK). The agent is designed to consume tools from a remote MCP (Model-Context-Protocol) server.
 
 ## Core Concept
 
@@ -10,7 +10,7 @@ This represents the state-of-the-art for rapid, convention-based agent developme
 
 ## Files
 
-- **`agent.py`**: The complete agent definition. It simply declares the `root_agent` and points it to the MCP server running at `http://localhost:8080`.
+- **`agent.py`**: The complete agent definition. It simply declares the `root_agent` and points it to the MCP server running at `http://localhost:8181`.
 
 ## How to Run
 
@@ -49,9 +49,18 @@ In your second terminal, run the ADK agent by pointing the `adk` command to the 
 adk run adk-agent
 ```
 
-1.  When the `User:` prompt appears, enter your question. For example:
-    ```
-    User: Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?
-    ```
+When the `User:` prompt appears, enter your question. For example:
+```
+User: Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?
+```
 
-2.  **Follow the execution in a web browser (optional):** The `adk` tool will print a URL to a local web server (e.g., `http://127.0.0.1:8000`). You can open this URL to see a real-time, interactive graph of the agent's thought process and tool calls.
+### 4. Web UI
+To visualize the agent's execution, you can use the `adk web` command.
+
+```bash
+# Make sure to run in the parent (root) directory
+adk web adk-agent
+```
+The command will print a URL (e.g., `http://127.0.0.1:8000`) that you can open in a web browser to see a real-time, interactive graph of the agent's thought process.
+
+![ADK Web UI showing agent trace](../mcp/adk-web.png)

@@ -1,34 +1,29 @@
-AI Journey
-===
+# AI Journey
 
-Run and connect to LLM
----
-* ochat/ochat.py: a command line python tool for streamed llm invocation, supporting image attachments
+This repository documents a journey of exploration into building and interacting with Large Language Models (LLMs), from basic command-line tools to sophisticated, multi-tool agents.
 
-Tools/Functions facility
----
-* tool/poc.py: understand how the tool callback is working
-* tool/langchain.py: poc tool use in LangChain
-* tool/llamaindex.py: poc tool use in LlamaIndex
+## Core Areas of Exploration
 
-Model Context Protocol
----
-* mcp/server.py: POC MCP Server, HTTP Streaming example
-* mcp/client.py: POC MCP client to test the server (also verified by https://github.com/modelcontextprotocol/inspector)
-* mcp/mcp_client.py: POC using LangChain and experimental SCP server discovery mcp/mcp_toolkit.py and universal dispatcher mcp/mcp_tool.py. Demonstrates realtime streaming ability.
-* mcp-profile/mcp_profile.py: A simple, stdio-based MCP server with a single tool.
+### 1. Foundational LLM Interaction
+- **`ochat/`**: A simple, yet powerful command-line tool for streaming conversations with local Ollama models, including support for multimodal image inputs.
 
-Agentic Workflow
----
-* adk-agent/agent.py Google Agent Development Kit (ADK) based POC, the orchestrates tool use and can be monitored. Supports desired tool discovery out-of-the-box! 
-* adk-mcp/agent.py: An ADK agent that uses a stdio-based MCP servers for local tool execution.  
+### 2. Local Tool Calling with Ollama
+- **`tool/`**: A proof-of-concept demonstrating how to make a local Ollama model use tools. It provides parallel implementations using both **LangChain** and **LlamaIndex**, showcasing different approaches to agentic tool use.
 
-Future projects
-===
-* https://github.com/gaboom/ai-bob a planned pi based physical assistant, currently a POC for realtime bi-directional audio streaming with openai realtime api.
-* https://github.com/gaboom/baios Operating system for AI agents.
+### 3. Model-Context-Protocol (MCP)
+- **`mcp/`**: A deep dive into the Model-Context-Protocol. This directory contains:
+    - A Python-based MCP server (`server.py`) that exposes tools over HTTP.
+    - A low-level manual client (`client.py`) for understanding core orchestration.
+    - A high-level LangChain agent (`mcp_client.py`) that uses a custom `MCPToolkit` for automatic tool discovery.
 
-Notes
-===
-Openai API Key, Google API Studio API Key, Python, Ollama, ADK and other tools required.
-https://github.com/google-gemini/gemini-cli was extensively used.
+### 4. Advanced Agentic Workflows with Google ADK
+- **`adk-agent/`**: Demonstrates a state-of-the-art, declarative agent using the Google Agent Development Kit (ADK). This agent connects to the HTTP-based MCP server from the `mcp/` directory, showcasing framework-native tool discovery and orchestration.
+- **`adk-mcp/`**: Showcases a powerful and modular ADK agent that dynamically loads tools from multiple, independent, local processes over `stdio`. This agent combines tools written in both Python and Node.js (via `npx`), providing capabilities for user profiles, filesystem operations, and Wikipedia lookups.
+
+## Future Projects
+- **ai-bob**: A planned Raspberry Pi-based physical assistant. (See https://github.com/gaboom/ai-bob)
+- **baios**: An experimental operating system for AI agents. (See https://github.com/gaboom/baios)
+
+## Setup & Notes
+- An OpenAI API Key, Google Cloud credentials, Python, Ollama, and Node.js are required to run all examples.
+- The Gemini CLI (https://github.com/google-gemini/gemini-cli) was used extensively during development.

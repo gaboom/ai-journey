@@ -1,90 +1,56 @@
-# ADK MCP Agent Examples
+# ADK Agent with Multiple Stdio MCP Toolsets
 
-This project demonstrates two ways of using the Google Agent Development Kit (ADK) with local Model-Context-Protocol (MCP) servers.
+This project demonstrates a powerful pattern for building a Google Agent Development Kit (ADK) agent that dynamically loads its tools from multiple, independent, local processes communicating over standard input/output (stdio).
 
-## Core Concepts
+## Core Concept
 
-This directory contains two distinct examples:
+The agent defined in `agent.py` is configured to use three separate `MCPToolset` instances, each powered by a different stdio-based command:
 
-1.  **Wikipedia Agent (HTTP MCP Server)**: This agent (`agent.py`) connects to a locally running Python script, `wikipedia_mcp_server.py`, over HTTP. The ADK's `MCPToolset` automatically discovers the tools exposed by the server and makes them available to the LLM. This architecture separates the agent's logic from the tool implementation.
+1.  **Profile Toolset (Python)**: Launches a local Python script (`mcp_profile.py`) to provide a custom `get_user_token` tool. This demonstrates how to integrate custom, project-specific tools written in Python.
 
-2.  **Profile Server (Stdio MCP)**: The `mcp_profile.py` script is a simple, standalone MCP server that communicates over standard input/output (stdio) instead of HTTP. It demonstrates a lightweight way to provide tools to a local process without needing a network server.
+2.  **Filesystem Toolset (Node.js/npx)**: Uses `npx` to run the public `@modelcontextprotocol/server-filesystem` package. This instantly gives the agent the ability to read, write, and list files in its working directory.
 
-**Note:** The `wikipedia_client.py` in this directory is a placeholder with mock functions.
+3.  **Wikipedia Toolset (Node.js/npx)**: Uses `npx` to run the public `Rudra-ravi/wikipedia-mcp` package. This provides the agent with tools to search Wikipedia and retrieve article content.
+
+This architecture allows for a highly modular and extensible agent. The ADK's `StdioServerParameters` handles the lifecycle of each tool subprocess, making the setup clean and declarative.
 
 ## Files
 
-- **`agent.py`**: Defines the ADK agent, configured to use the HTTP-based `MCPToolset`.
-- **`wikipedia_mcp_server.py`**: An MCP server that provides mock tools for interacting with Wikipedia.
-- **`wikipedia_client.py`**: A *mock* client used by the Wikipedia server.
+- **`agent.py`**: The complete agent definition, which declaratively combines the three toolsets.
 - **`mcp_profile.py`**: A simple, stdio-based MCP server with a single `get_user_token` tool.
-- **`requirements.txt`**: Python dependencies for all components in this directory.
+- **`requirements.txt`**: Python dependencies for the agent.
 
 ## How to Run
 
 ### 1. Setup
-It is recommended to use a virtual environment.
+Ensure you have the necessary prerequisites installed:
+- Python and the packages in `requirements.txt`
+- Node.js and `npx`
+- Google Cloud SDK for authentication
 
 ```bash
 # Navigate to this directory
 cd adk-mcp
 
-# Create and activate a virtual environment
-python -m venv .venv
-# On Windows
-.venv\Scripts\activate
-# On Linux/macOS
-# source .venv/bin/activate
-
-# Install dependencies
+# It is recommended to use a virtual environment.
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Log in for Application Default Credentials (if not already done)
 gcloud auth application-default login
 ```
 
----
+### 2. Run the Agent
+Because the agent uses `StdioToolset` for all its tools, you do not need to start any servers manually. The ADK will launch all three tool processes automatically.
 
-### Example 1: Run the Wikipedia Agent (HTTP)
-
-#### A. Start the Wikipedia MCP Server
-In one terminal, start the tool server from this directory (`adk-mcp`):
-```bash
-python wikipedia_mcp_server.py
-```
-
-#### B. Run the Agent
-In a second terminal, use the `adk` command-line tool to run the agent.
-
+From the `adk-mcp` directory, simply run:
 ```bash
 adk run .
 ```
 
-When the `User:` prompt appears, you can ask a question that uses the mock Wikipedia tools, for example:
-```
-User: Please search for "Artificial Intelligence" on Wikipedia.
-```
----
+When the `User:` prompt appears, you can ask questions that leverage any of the loaded tools.
 
-### Example 2: Run the Profile Server (Stdio)
-
-The `mcp_profile.py` server runs over stdio. You can execute it directly and send it MCP JSON messages on stdin.
-
-#### A. Run the Server
-```bash
-python mcp_profile.py
-```
-
-#### B. Send a Request
-You can then manually send it an MCP request to test it. For example, paste the following JSON into the terminal where the server is running and press Enter:
-```json
-{
-  "mcp_version": "1.0",
-  "request_id": "test-1",
-  "tool_name": "get_user_token",
-  "arguments": {
-    "user": "Alice"
-  }
-}
-```
-The server will respond with the tool's output on stdout.
+**Examples:**
+- **Profile Tool:** `What is the token for user Bob?`
+- **Filesystem Tool:** `Read the contents of the file named agent.py`
+- **Wikipedia Tool:** `Search Wikipedia for "Large Language Model"`
