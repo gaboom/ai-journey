@@ -1,8 +1,0 @@
-{
-  "mcp_version": "1.0",
-  "request_id": "test-1",
-  "tool_name": "get_user_token",
-  "arguments": {
-    "user": "Alice"
-  }
-}

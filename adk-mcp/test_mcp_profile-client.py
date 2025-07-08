@@ -3,6 +3,7 @@ import os
 import logging
 import anyio
 from mcp import ClientSession, types
+from mcp.client.stdio import stdio_client, StdioServerParameters
 
 # --- Basic Logging Setup ---
 logging.basicConfig(
@@ -15,35 +16,45 @@ log = logging.getLogger()
 async def main():
     """
     Tests the mcp_profile.py server by launching it as a subprocess
-    and using the high-level ClientSession to call a tool, all powered by anyio.
+    using the officially documented stdio_client with StdioServerParameters.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     server_path = os.path.join(script_dir, "mcp_profile.py")
-    server_command = [sys.executable, server_path]
-    log.info(f"Launching server with command: {' '.join(server_command)}")
+    log.info(f"Target server script: {server_path}")
+
+    # 1. Define the server parameters using the correct class
+    server_params = StdioServerParameters(
+        command=sys.executable,
+        args=[server_path]
+    )
+
+    log.info(f"Connecting to server with command: '{server_params.command} {' '.join(server_params.args)}'")
 
     try:
-        # Use anyio.open_process to correctly manage the subprocess and its streams
-        async with await anyio.open_process(server_command) as process:
-            log.info("Server process started.")
-
-            # The ClientSession requires anyio-compatible streams, which open_process provides.
-            # This is the high-level, correct way to use the library.
-            async with ClientSession(process.stdout, process.stdin) as session:
+        # 2. Use stdio_client with the server parameters object
+        async with stdio_client(server_params) as (read, write):
+            # 3. Establish the high-level session
+            async with ClientSession(read, write) as session:
                 await session.initialize()
                 log.info("MCP session initialized successfully.")
 
+                # Optional: List tools to verify connection
+                list_tools_response = await session.list_tools()
+                tool_names = [t.name for t in list_tools_response.tools]
+                log.info(f"Discovered tools: {tool_names}")
+                assert "get_user_token" in tool_names
+
+                # 4. Call the tool
                 tool_args = {"user": "Alice"}
                 log.info(f"Calling tool 'get_user_token' with args: {tool_args}")
-
-                # The high-level client handles serialization and response parsing.
                 tool_result = await session.call_tool("get_user_token", tool_args)
 
+                # 5. Print and verify the result
                 print("\n" + "="*30)
                 log.info("--- Received MCP Response ---")
                 if tool_result.content and isinstance(tool_result.content[0], types.TextContent):
                     response_text = tool_result.content[0].text
-                    print(f"✅ Success! Server Response: {response_text}")
+                    print(f"Success! Server Response: {response_text}")
                     assert "XCMP0618" in response_text
                 elif tool_result.isError:
                     print(f"❌ Error! Server returned an error: {tool_result.content}")
@@ -53,7 +64,6 @@ async def main():
 
     except Exception as e:
         log.error(f"An error occurred in the client: {e}", exc_info=True)
-        # Re-raise to ensure the test fails in case of an exception
         raise
 
     log.info("Client finished successfully.")
