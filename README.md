@@ -3,7 +3,7 @@ AI Journey
 
 Run and connect to LLM
 ---
-* ochat-gemini/ochat.py: a command line python tool for streamed llm invocation, supporting image attachements
+* ochat/ochat.py: a command line python tool for streamed llm invocation, supporting image attachments
 
 Tools/Functions facility
 ---
@@ -15,16 +15,16 @@ Model Context Protocol
 ---
 * mcp/server.py: POC MCP Server, HTTP Streaming example
 * mcp/client.py: POC MCP client to test the server (also verified by https://github.com/modelcontextprotocol/inspector)
-* mcp/mcp_client.py: POC using LangChaing and experimental SCP server discovery mcp/mcp_toolkit.py and universal dispatcher mcp/mcp_tool.py. Demonstrates streaming capability.
+* mcp/mcp_client.py: POC using LangChain and experimental SCP server discovery mcp/mcp_toolkit.py and universal dispatcher mcp/mcp_tool.py. Demonstrates realtime streaming ability.
 
 Agentic Workflow
 ---
-* mcp/adk_agent/agent.py Google Agent Development Kit (ADK) based POC, the orchestrates tool use and can be monitored. Platform supports SCP server function discovery out-of-the-box! 
+* adk_agent/agent.py Google Agent Development Kit (ADK) based POC, the orchestrates tool use and can be monitored. Platform supports SCP server function discovery out-of-the-box! 
 
 Future projects
 ===
 * https://github.com/gaboom/ai-bob a planned pi based physical assistant, currently a POC for realtime bi-directional audio streaming with openai realtime api.
-* https://github.com/gaboom/baios Operating sytem for AI agents.
+* https://github.com/gaboom/baios Operating system for AI agents.
 
 Notes
 ===

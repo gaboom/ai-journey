@@ -8,6 +8,7 @@ A simple command-line interface to chat with local Ollama models, with support f
 -   Pass a message as a command-line argument.
 -   Include one or more images in the chat.
 -   Streams responses from the model.
+-   Verbose mode to print session statistics.
 
 ## Prerequisites
 
@@ -17,7 +18,7 @@ A simple command-line interface to chat with local Ollama models, with support f
 
 ## Installation
 
-1.  Clone this repository or download the `ochat.py` script.
+1.  Navigate to the `ochat` directory.
 2.  Install the required Python package:
 
     ```bash
@@ -26,13 +27,9 @@ A simple command-line interface to chat with local Ollama models, with support f
 
 ## Usage
 
-To use the script, run `ochat.py` from your terminal, followed by your message.
+To use the script, run `python ochat.py` from your terminal, followed by your message.
 
 ### Basic Usage
-
-```bash
-python ochat.py "Why is the sky blue?"
-```
 
 If you don't provide a message, it will default to asking for a joke:
 
@@ -40,28 +37,41 @@ If you don't provide a message, it will default to asking for a joke:
 python ochat.py
 ```
 
+To ask a question:
+```bash
+python ochat.py "Why is the sky blue?"
+```
+
 ### Using a Different Model
 
-You can specify a different model using the `--model` argument.
+You can specify a different model using the `-m` or `--model` argument.
 
 ```bash
-python ochat.py "What is the capital of France?" --model gemma3
+python ochat.py -m llama3 "What is the capital of France?"
 ```
 
 ### Sending Images
 
-To send one or more images, use the `--image` argument followed by the path(s) to your image(s). This is best used with a multimodal model like `llava`.
+To send one or more images, use the `-i`, `--image`, `-f`, or `--file` argument followed by the path(s) to your image(s). This is best used with a multimodal model like `llava`.
 
 **Single Image:**
 
 ```bash
-python ochat.py "What is in this image?" --image /path/to/your/image.png --model llava
+python ochat.py -m llava -i /path/to/your/image.png "What is in this image?"
 ```
 
 **Multiple Images:**
 
 ```bash
-python ochat.py "Describe these images." --image /path/to/image1.jpg /path/to/image2.png --model llava
+python ochat.py -m llava -f /path/to/image1.jpg /path/to/image2.png "Describe these images."
+```
+
+### Verbose Output
+
+To see session statistics after the response, use the `-v` or `--verbose` flag.
+
+```bash
+python ochat.py -v "Tell me a short story."
 ```
 
 ### Help

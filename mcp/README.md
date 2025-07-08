@@ -24,10 +24,8 @@ It showcases three different client implementations, progressing from manual orc
     - `mcp_tool.py`: A generic wrapper to make a single MCP function compatible with LangChain.
     - `mcp_toolkit.py`: A self-contained toolkit that manages the connection and discovery process.
 
-### 3. Google Agent Development Kit (ADK) Client (`adk_agent/`)
-- **Purpose**: Demonstrates the ideal, high-level, declarative approach using a framework with built-in MCP support.
-- **Process**: The `adk_agent/agent.py` file simply *declares* the agent and points to the MCP server. The ADK framework handles all discovery, orchestration, and execution.
-- **Good for**: Seeing the state-of-the-art for rapid, convention-based agent development.
+### 3. Google Agent Development Kit (ADK) Client
+The declarative ADK client has been moved to its own top-level directory. See the `adk_agent/` directory for the code and instructions.
 
 ## How to Run
 
@@ -74,25 +72,7 @@ In a second terminal, choose one of the following clients to run.
 python mcp_client.py
 ```
 
-#### Option B: Run the Google ADK Client
-The ADK uses its own command-line tool to run agents.
-
-1.  **Run the agent interactively:**
-    ```bash
-    adk run adk_agent
-    ```
-2.  When the `User:` prompt appears, enter your question. For example:
-    ```
-    User: Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?
-    ```
-
-3.  **Follow the execution in a web browser (optional):** The `adk` tool will print a URL to a local web server (e.g., `http://127.0.0.1:8000`). You can open this URL to see a real-time, interactive graph of the agent's thought process and tool calls.
-
-    Below is an example of the web trace, showing the LLM's reasoning, the tool call it decided to make, and the final result.
-
-    ![ADK Web Trace](adk-web.png)
-
-#### Option C: Run the Low-Level Manual Client
+#### Option B: Run the Low-Level Manual Client
 ```bash
 python client.py
 ```
