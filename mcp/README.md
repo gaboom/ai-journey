@@ -25,7 +25,7 @@ It showcases three different client implementations, progressing from manual orc
     - `mcp_toolkit.py`: A self-contained toolkit that manages the connection and discovery process.
 
 ### 3. Google Agent Development Kit (ADK) Client
-The declarative ADK client has been moved to its own top-level directory. See the `adk_agent/` directory for the code and instructions.
+The declarative ADK client has been moved to its own top-level directory. See the `adk-agent/` directory for the code and instructions.
 
 ## How to Run
 
@@ -53,7 +53,7 @@ set OPENAI_API_KEY="your_openai_api_key"
 # On Linux/macOS
 # export OPENAI_API_KEY="your_openai_api_key"
 
-# For Google ADK (used by adk_agent)
+# For Google ADK (used by adk-agent)
 # Install the Google Cloud SDK, then run:
 gcloud auth application-default login
 ```

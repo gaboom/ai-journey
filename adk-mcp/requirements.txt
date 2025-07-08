@@ -1,0 +1,7 @@
+google-adk
+litellm
+openai
+fastapi
+uvicorn
+mcp>=1.10.1
+anyio

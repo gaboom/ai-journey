@@ -16,10 +16,12 @@ Model Context Protocol
 * mcp/server.py: POC MCP Server, HTTP Streaming example
 * mcp/client.py: POC MCP client to test the server (also verified by https://github.com/modelcontextprotocol/inspector)
 * mcp/mcp_client.py: POC using LangChain and experimental SCP server discovery mcp/mcp_toolkit.py and universal dispatcher mcp/mcp_tool.py. Demonstrates realtime streaming ability.
+* mcp-profile/mcp_profile.py: A simple, stdio-based MCP server with a single tool.
 
 Agentic Workflow
 ---
-* adk_agent/agent.py Google Agent Development Kit (ADK) based POC, the orchestrates tool use and can be monitored. Platform supports SCP server function discovery out-of-the-box! 
+* adk-agent/agent.py Google Agent Development Kit (ADK) based POC, the orchestrates tool use and can be monitored. Supports desired tool discovery out-of-the-box! 
+* adk-mcp/agent.py: An ADK agent that uses a stdio-based MCP servers for local tool execution.  
 
 Future projects
 ===

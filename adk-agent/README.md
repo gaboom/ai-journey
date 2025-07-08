@@ -14,44 +14,44 @@ This represents the state-of-the-art for rapid, convention-based agent developme
 
 ## How to Run
 
+You will need two terminals open, both navigated to the project root directory.
+
 ### 1. Setup
-This agent requires the Google Cloud SDK for authentication and the `google-adk` library. It is recommended to use a virtual environment.
+This agent requires the Google Cloud SDK for authentication and the `google-adk` library. It is recommended to use the project's root virtual environment.
 
 ```bash
-# Create and activate a virtual environment
-python -m venv .venv
+# Activate the virtual environment from the project root
 # On Windows
 .venv\Scripts\activate
 # On Linux/macOS
 # source .venv/bin/activate
 
-# Install the ADK library
-pip install google-adk
+# The ADK library should be installed from the root requirements.txt
+# If not, run: pip install google-adk
 
-# Install and initialize the Google Cloud SDK
+# Install and initialize the Google Cloud SDK if you haven't already
 # Follow instructions at: https://cloud.google.com/sdk/docs/install
 
 # Log in for Application Default Credentials
 gcloud auth application-default login
 ```
 
-### 2. Start the MCP Server
-This agent requires the MCP tool server to be running. In a separate terminal, navigate to the `mcp` directory and start the server:
+### 2. Start the MCP Server (Terminal 1)
+This agent requires the MCP tool server to be running. In your first terminal, run the server from the `mcp` directory:
 ```bash
-cd ../mcp
-python server.py
+python mcp/server.py
+```
+The server will start and listen on port 8181.
+
+### 3. Run the ADK Agent (Terminal 2)
+In your second terminal, run the ADK agent by pointing the `adk` command to the `adk-agent` directory:
+```bash
+adk run adk-agent
 ```
 
-### 3. Run the ADK Agent
-In another terminal, from the `adk_agent` directory, use the `adk` command-line tool to run the agent.
-
-1.  **Run the agent interactively:**
-    ```bash
-    adk run .
-    ```
-2.  When the `User:` prompt appears, enter your question. For example:
+1.  When the `User:` prompt appears, enter your question. For example:
     ```
     User: Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?
     ```
 
-3.  **Follow the execution in a web browser (optional):** The `adk` tool will print a URL to a local web server (e.g., `http://127.0.0.1:8000`). You can open this URL to see a real-time, interactive graph of the agent's thought process and tool calls.
+2.  **Follow the execution in a web browser (optional):** The `adk` tool will print a URL to a local web server (e.g., `http://127.0.0.1:8000`). You can open this URL to see a real-time, interactive graph of the agent's thought process and tool calls.

@@ -17,7 +17,7 @@ The user and I have built a comprehensive demonstration of a client-server archi
 We built three distinct clients, showcasing a progression from manual work to fully automated frameworks:
 1.  A **low-level, manual orchestrator** (`client.py`) using the `openai` library directly.
 2.  A **high-level LangChain agent** (`mcp_client.py`) using a custom-built, reusable `MCPToolkit` that we created to automatically discover tools.
-3.  A **declarative Google Agent Development Kit (ADK) agent** (`adk_agent/`) that uses the framework's built-in `MCPToolset` for a zero-code discovery and orchestration experience.
+3.  A **declarative Google Agent Development Kit (ADK) agent** (`adk-agent/`) that uses the framework's built-in `MCPToolset` for a zero-code discovery and orchestration experience.
 
 The key achievement was comparing these different approaches and successfully implementing a clean, framework-native solution with the ADK.
 
@@ -28,8 +28,8 @@ The key achievement was comparing these different approaches and successfully im
 - **`mcp_client.py`**: The high-level LangChain client.
 - **`mcp_tool.py`**: A generic wrapper to make a single MCP function compatible with LangChain.
 - **`mcp_toolkit.py`**: A self-contained toolkit that manages connection and tool discovery for LangChain.
-- **`adk_agent/`**: The directory containing the Google ADK agent definition.
-    - **`adk_agent/agent.py`**: The declarative agent definition file. The agent variable **must** be named `root_agent`.
+- **`adk-agent/`**: The directory containing the Google ADK agent definition.
+    - **`adk-agent/agent.py`**: The declarative agent definition file. The agent variable **must** be named `root_agent`.
 
 ## User Preferences & Memories
 
@@ -38,6 +38,43 @@ The key achievement was comparing these different approaches and successfully im
 - **Architectural Goal:** The user prefers clean, reusable, and framework-compliant code. The end goal is always to find the highest-level abstraction that simplifies the problem, as demonstrated by our adoption of the ADK.
 - **ADK Usage:** The ADK agent is run via the `adk run <directory>` command, not by executing the python file directly. It launches an interactive CLI and a web UI for tracing.
 - **Test Input:** A good test prompt for the agents is: `"Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?"`
+
+---
+## Context from: mcp-profile/GEMINI.md (New)
+---
+
+## Project Overview
+
+The `mcp-profile` project is a simple, standalone MCP server that communicates over stdio. It was created to demonstrate the basic principles of an MCP server without the complexity of HTTP.
+
+## Key Files & Directories
+
+- **`mcp_profile.py`**: The server script. It defines a single tool, `get_user_token`, and listens for requests on stdin.
+- **`requirements.txt`**: Contains the single `mcp` dependency.
+
+## Key Learnings & Decisions
+
+- This server uses the `server.run()` method from the `mcp` library, which defaults to stdio communication, making it very easy to set up for local, script-based tools.
+
+---
+## Context from: adk-mcp/GEMINI.md (New)
+---
+
+## Project Overview
+
+The `adk-mcp` project is a fork of the `adk-agent` that demonstrates an alternative way of providing tools to an ADK agent. Instead of connecting to a remote HTTP MCP server, this agent uses the `StdioToolset` to launch a local Python script (`wikipedia_mcp_server.py`) as a subprocess and communicate with it over standard input/output.
+
+## Key Files & Directories
+
+- **`agent.py`**: Defines the ADK agent, configured with a `StdioToolset`.
+- **`wikipedia_mcp_server.py`**: A local MCP server providing Wikipedia tools. It is launched automatically by the agent.
+- **`wikipedia_client.py`**: A **mock** client with placeholder methods. It does not perform real Wikipedia lookups.
+- **`requirements.txt`**: Contains dependencies for this specific agent (`google-adk`, `wikipedia`).
+
+## Key Learnings & Decisions
+
+- This project demonstrates a powerful pattern for bundling tools directly with an agent, removing the need for a separate, networked server process. This simplifies deployment and reduces network latency.
+- The original `wikipedia-mcp` code from the GitHub repository was incomplete (missing the client and a main execution block), so a mock client and a runner were created to make the example functional for demonstration purposes.
 
 ---
 ## Context from: tool/GEMINI.md

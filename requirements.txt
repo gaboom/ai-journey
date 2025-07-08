@@ -1,0 +1,22 @@
+# This file is a consolidation of all requirements.txt files in the project.
+
+# From mcp/
+mcp[http,fastapi]>=1.10.1
+openai>=1.0.0
+langchain>=0.1.0
+langchain-openai>=0.1.0
+google-adk>=0.1.0
+Pillow>=9.0.0
+
+# From tool/
+langchain-ollama
+llama-index
+llama-index-llms-openai
+llama-index-agent-openai
+llama-index-llms-ollama
+
+# From adk-mcp/
+# wikipedia # This package has build issues and is removed for now.
+litellm
+fastapi
+uvicorn
