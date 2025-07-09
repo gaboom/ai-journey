@@ -1,0 +1,9 @@
+[submodule "openai-realtime-console"]
+	path = openai-realtime-console
+	url = https://github.com/openai/openai-realtime-console
+[submodule "ai-bob-realtime"]
+	path = ai-bob-realtime
+	url = https://github.com/gaboom/ai-bob
+[submodule "baios"]
+	path = baios
+	url = https://github.com/gaboom/baios
