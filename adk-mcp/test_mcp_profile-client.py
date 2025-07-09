@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import anyio
+import re
 from mcp import ClientSession, types
 from mcp.client.stdio import stdio_client, StdioServerParameters
 
@@ -55,7 +56,15 @@ async def main():
                 if tool_result.content and isinstance(tool_result.content[0], types.TextContent):
                     response_text = tool_result.content[0].text
                     print(f"Success! Server Response: {response_text}")
-                    assert "XCMP0618" in response_text
+                    
+                    # Verify the response structure and token properties
+                    expected_prefix = "User Alice has secret token "
+                    assert response_text.startswith(expected_prefix)
+                    
+                    token = response_text[len(expected_prefix):]
+                    assert len(token) == 8, "Token should be 8 characters long."
+                    assert token.isalnum(), "Token should be alphanumeric."
+                    assert re.match(r'ALIC\d{4}', token), "Token format should be ALIC followed by 4 digits."
                 elif tool_result.isError:
                     print(f"❌ Error! Server returned an error: {tool_result.content}")
                 else:
