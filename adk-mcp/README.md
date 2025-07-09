@@ -54,3 +54,12 @@ When the `User:` prompt appears, you can ask questions that leverage any of the 
 - **Profile Tool:** `What is the token for user Bob?`
 - **Filesystem Tool:** `Read the contents of the file named agent.py`
 - **Wikipedia Tool:** `Search Wikipedia for "Large Language Model"`
+
+## Testing with MCP Inspector
+
+You can test the standalone `mcp_profile.py` server directly using the official MCP Inspector tool. This is useful for debugging the tool without running the full ADK agent.
+
+From the project's root directory, run the following command:
+```bash
+DANGEROUSLY_OMIT_AUTH=true npx @modelcontextprotocol/inspector python adk-mcp/mcp_profile.py
+```

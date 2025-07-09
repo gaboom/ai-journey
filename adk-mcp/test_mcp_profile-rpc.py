@@ -3,6 +3,7 @@ import os
 import logging
 import anyio
 import json
+import re
 from mcp import types
 
 # --- Basic Logging Setup ---
@@ -15,8 +16,8 @@ log = logging.getLogger()
 
 async def main():
     """
-    Launches the mcp_profile.py server and interacts with it using anyio,
-    with manual JSON encoding to bypass the SessionMessage issue.
+    Launches the mcp_profile.py server and interacts with it using a compliant,
+    sequential request/response flow, while also capturing stderr for debugging.
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     server_path = os.path.join(script_dir, "mcp_profile.py")
@@ -27,53 +28,90 @@ async def main():
         async with await anyio.open_process(server_command) as process:
             log.info("Server process started.")
 
-            # A proper MCP session involves an initialize message first.
-            init_request = {"jsonrpc": "2.0", "method": "initialize", "params": {"mcp_version": "1.0"}, "id": "init"}
-            list_tools_request = {"jsonrpc": "2.0", "method": "list_tools", "params": {}, "id": "list-1"}
-            tool_request = {
-                "jsonrpc": "2.0",
-                "method": "tool",
-                "params": {"tool_name": "get_user_token", "arguments": {"user": "Alice"}},
-                "id": "tool-1"
-            }
+            # --- Helper Functions ---
+            read_buffer = b''
 
             async def send_message(message):
-                """Helper to frame and send a single message."""
-                message_bytes = json.dumps(message).encode('utf-8')
-                header = f"Content-Length: {len(message_bytes)}\r\n\r\n".encode('utf-8')
-                log.info(f"Sending: {message}")
-                await process.stdin.send(header + message_bytes)
+                """Helper to send a single line of JSON."""
+                message_to_send = json.dumps(message, separators=(',', ':')) + '\n'
+                message_bytes = message_to_send.encode('utf-8')
+                log.info(f"--> SENDING (raw): {repr(message_bytes)}")
+                await process.stdin.send(message_bytes)
 
-            # Send all messages in sequence
-            await send_message(init_request)
-            await send_message(list_tools_request)
-            await send_message(tool_request)
-
-            # Close stdin to signal that we are done sending data. This is critical.
-            await process.stdin.aclose()
-
-            # Read the response
-            log.info("Reading response from server...")
-            response_bytes = await process.stdout.receive()
-            
-            # A real client would parse the Content-Length header properly.
-            # For this test, we assume the full response is in one chunk after the header.
-            try:
-                header_str, json_str = response_bytes.decode('utf-8').split('\r\n\r\n', 1)
-                response_data = json.loads(json_str)
-
-                print("\n" + "="*30)
-                log.info("--- Received MCP Response ---")
+            async def read_message():
+                """Reads and parses one line of JSON from stdout."""
+                nonlocal read_buffer
+                while b'\n' not in read_buffer:
+                    read_buffer += await process.stdout.receive()
                 
-                # The tool response is the second message. A real client would check the ID.
-                content = response_data.get("result", {}).get("content", [{}])[0].get("text", "N/A")
-                print(f"✅ Success! Server Response: {content}")
-                log.info(f"Full message: {json.dumps(response_data, indent=2)}")
+                line_bytes, _, read_buffer = read_buffer.partition(b'\n')
+                line_str = line_bytes.decode('utf-8').strip()
+
+                if not line_str:
+                    return await read_message() # Skip empty lines
+                
+                log.info(f"--> RECEIVED (raw): {repr(line_str)}")
+                msg = json.loads(line_str)
+                return msg
+
+            async def log_stderr():
+                """Monitors the server's stderr stream and logs any output."""
+                async for line in process.stderr:
+                    log.warning(f"[SERVER-STDERR] {line.decode('utf-8').strip()}")
+
+            # --- Main Execution Logic ---
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(log_stderr) # Start the stderr logger in the background
+
+                # 1. Initialize
+                init_request = {
+                    "jsonrpc": "2.0", "method": "initialize", "id": "init00",
+                    "params": {
+                        "protocolVersion": "1.0",
+                        "clientInfo": {"name": "test-rpc-client", "version": "1.0.0"},
+                        "capabilities": {}
+                    }
+                }
+                await send_message(init_request)
+                init_response = await read_message()
+                assert init_response.get("id") == "init00" and "result" in init_response, "Initialization failed"
+                log.info("Initialization successful.")
+
+                # 2. Send Initialized Notification (as per MCP spec)
+                initialized_notification = {"jsonrpc": "2.0", "method": "notifications/initialized"}
+                await send_message(initialized_notification)
+                log.info("Sent 'initialized' notification.")
+
+                # 3. List Tools
+                list_tools_request = {"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": "list-1"}
+                await send_message(list_tools_request)
+                list_tools_response = await read_message()
+                assert list_tools_response.get("id") == "list-1" and "result" in list_tools_response, "List tools failed"
+                tool_names = [t['name'] for t in list_tools_response.get("result", {}).get("tools", [])]
+                assert "get_user_token" in tool_names, "Tool 'get_user_token' not found"
+                log.info("Tool discovery successful.")
+
+                # 3. Call Tool
+                tool_request = {
+                    "jsonrpc": "2.0", "method": "tools/call", "id": "tool-1",
+                    "params": {"name": "get_user_token", "arguments": {"user": "Alice"}}
+                }
+                await send_message(tool_request)
+                tool_response = await read_message()
+                assert tool_response.get("id") == "tool-1" and "result" in tool_response, "Tool call failed"
+                content = tool_response.get("result", {}).get("content", [{}])[0].get("text", "")
+                
+                print("\n" + "="*30)
+                log.info("--- Final Verification ---")
+                print(f"Success! Server Response: {content}")
+                assert content.startswith("User Alice has secret token ")
+                token = content.split(" ")[-1]
+                assert len(token) == 8 and token.isalnum() and re.match(r'ALIC\d{4}', token)
+                print("Token format verified.")
                 print("="*30 + "\n")
 
-            except (ValueError, IndexError) as e:
-                log.error(f"Failed to parse server response: {e}")
-                log.error(f"Raw response: {response_bytes.decode('utf-8')}")
+                # 4. Close stdin to allow the server process to exit cleanly
+                await process.stdin.aclose()
 
     except Exception as e:
         log.error(f"An error occurred in the client: {e}", exc_info=True)
@@ -82,5 +120,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Use anyio.run to execute the main async function
     anyio.run(main)
