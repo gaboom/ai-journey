@@ -1,106 +1,89 @@
-# Gemini Project Context
+# Gemini Project Context: AI Journey
 
-This file contains project-specific context and memories for the Gemini agent. It is a consolidation of multiple `GEMINI.md` files from different subdirectories.
+This document serves as a comprehensive guide and memory for the AI agent regarding the `ai` monorepo. The overall project, "AI Journey," is a collection of proofs-of-concept and applications exploring various facets of Large Language Model (LLM) development, from basic model interaction to complex, agentic workflows.
 
----
-## Context from: mcp/GEMINI.md
----
+## General Conventions & Memories
 
-# Gemini Project Context
-
-This file contains project-specific context and memories for the Gemini agent.
-
-## Project Overview
-
-The user and I have built a comprehensive demonstration of a client-server architecture using the Model-Context-Protocol (MCP). The goal was to explore different methods for an LLM to consume external tools from a remote server.
-
-We built three distinct clients, showcasing a progression from manual work to fully automated frameworks:
-1.  A **low-level, manual orchestrator** (`client.py`) using the `openai` library directly.
-2.  A **high-level LangChain agent** (`mcp_client.py`) using a custom-built, reusable `MCPToolkit` that we created to automatically discover tools.
-3.  A **declarative Google Agent Development Kit (ADK) agent** (`adk-agent/`) that uses the framework's built-in `MCPToolset` for a zero-code discovery and orchestration experience.
-
-The key achievement was comparing these different approaches and successfully implementing a clean, framework-native solution with the ADK.
-
-## Key Files & Directories
-
-- **`server.py`**: The MCP server providing the `get_profile` tool.
-- **`client.py`**: The low-level client (manual orchestration).
-- **`mcp_client.py`**: The high-level LangChain client.
-- **`mcp_tool.py`**: A generic wrapper to make a single MCP function compatible with LangChain.
-- **`mcp_toolkit.py`**: A self-contained toolkit that manages connection and tool discovery for LangChain.
-- **`adk-agent/`**: The directory containing the Google ADK agent definition.
-    - **`adk-agent/agent.py`**: The declarative agent definition file. The agent variable **must** be named `root_agent`.
-
-## User Preferences & Memories
-
-- **Virtual Environment:** The user's Python virtual environment for this project is located at `C:\Users\gabor.czigola\src\ai\.venv`. When running `pip` or `python`, I must use the executables from that venv.
-- **File Preservation:** The user wants to keep all client implementations (`client.py`, `mcp_client.py`, etc.) for comparison. I should not delete them.
-- **Architectural Goal:** The user prefers clean, reusable, and framework-compliant code. The end goal is always to find the highest-level abstraction that simplifies the problem, as demonstrated by our adoption of the ADK.
-- **ADK Usage:** The ADK agent is run via the `adk run <directory>` command, not by executing the python file directly. It launches an interactive CLI and a web UI for tracing.
-- **Test Input:** A good test prompt for the agents is: `"Based ONLY AND EXCLUSIVELY on the PROFILE of Sing-Ming Pei Tue de Santos III., what could be his profession today?"`
+-   **Virtual Environment:** All Python-based sub-projects use a single virtual environment located at `C:\Users\gabor.czigola\src\ai\.venv`.
+-   **README Files:** When making changes, I must update the `README.md` in the root and any affected subdirectories.
+-   **Commits:** When creating a git commit, I should use a temporary file for the message.
+-   **File Preservation:** The user wants to keep all client and proof-of-concept implementations for comparison and historical context. I should not delete them unless explicitly asked.
+-   **Architectural Goal:** The user prefers clean, reusable, and framework-compliant code, aiming for the highest level of abstraction that solves the problem elegantly.
 
 ---
-## Context from: mcp-profile/GEMINI.md (New)
----
 
-## Project Overview
+## Sub-Project Summaries
 
-The `mcp-profile` project is a simple, standalone MCP server that communicates over stdio. It was created to demonstrate the basic principles of an MCP server without the complexity of HTTP.
+This section details the purpose, architecture, and key learnings for each sub-project within the repository.
 
-## Key Files & Directories
+### 1. `ochat` - Ollama Chat CLI
 
-- **`mcp_profile.py`**: The server script. It defines a single tool, `get_user_token`, and listens for requests on stdin.
-- **`requirements.txt`**: Contains the single `mcp` dependency.
+-   **Project Overview:** A simple, robust command-line interface for interacting with local Ollama models. It's designed for quick, terminal-based chats and supports multimodal input.
+-   **Key Files:**
+    -   `ochat.py`: The main script, built with `argparse` and the `ollama` Python library.
+-   **How to Run:**
+    ```bash
+    # Basic query
+    python ochat/ochat.py "Why is the sky blue?"
 
-## Key Learnings & Decisions
+    # Query with an image using a multimodal model
+    python ochat/ochat.py -m llava -i path/to/image.png "What is in this picture?"
+    ```
+-   **Key Learnings:** Demonstrates direct, streaming interaction with Ollama, including how to handle text and image data in the `ollama` library.
 
-- This server uses the `server.run()` method from the `mcp` library, which defaults to stdio communication, making it very easy to set up for local, script-based tools.
+### 2. `tool` - Local LLM Tool Use
 
----
-## Context from: adk-mcp/GEMINI.md (New)
----
+-   **Project Overview:** A proof-of-concept exploring how to make a local Ollama model (`llama3.2`) use external tools. It provides two parallel implementations to compare frameworks.
+-   **Key Files:**
+    -   `langchain.py`: A PoC using LangChain's `ChatOpenAI` client pointed at Ollama's OpenAI-compatible endpoint.
+    -   `llamaindex.py`: A PoC using LlamaIndex's native `llama-index-llms-ollama` integration with a `ReActAgent`.
+-   **Key Learnings:** The most reliable method for tool use with local models is often framework-specific. For LangChain, the OpenAI-compatible endpoint was necessary, while LlamaIndex worked best with its dedicated native integration.
 
-## Project Overview
+### 3. `mcp` - MCP Server & Clients
 
-The `adk-mcp` project is a fork of the `adk-agent` that demonstrates an alternative way of providing tools to an ADK agent. Instead of connecting to a remote HTTP MCP server, this agent uses the `StdioToolset` to launch a local Python script (`wikipedia_mcp_server.py`) as a subprocess and communicate with it over standard input/output.
+-   **Project Overview:** A demonstration of the Model-Context-Protocol (MCP) for tool serving. It includes a central server and multiple clients that showcase different levels of abstraction for consuming tools.
+-   **Key Files:**
+    -   `server.py`: The `FastMCP` server that exposes a `get_profile` tool over HTTP.
+    -   `client.py`: A low-level, manual client showing the full orchestration loop.
+    -   `mcp_client.py`: A high-level LangChain agent using a custom `MCPToolkit` for automatic tool discovery.
+-   **Key Learnings:** This project highlights the progression from manual tool-use orchestration to automated, framework-based approaches, with the `MCPToolkit` demonstrating a reusable solution for LangChain.
 
-## Key Files & Directories
+### 4. `adk-agent` - Declarative Agent (Remote Tools)
 
-- **`agent.py`**: Defines the ADK agent, configured with a `StdioToolset`.
-- **`wikipedia_mcp_server.py`**: A local MCP server providing Wikipedia tools. It is launched automatically by the agent.
-- **`wikipedia_client.py`**: A **mock** client with placeholder methods. It does not perform real Wikipedia lookups.
-- **`requirements.txt`**: Contains dependencies for this specific agent (`google-adk`, `wikipedia`).
+-   **Project Overview:** A Google Agent Development Kit (ADK) agent that consumes tools from the remote HTTP `mcp/server.py`.
+-   **Key Files:**
+    -   `agent.py`: A declarative agent definition that uses the ADK's built-in `MCPToolset` to connect to the server, discovering and orchestrating tools with zero manual code.
+-   **How to Run:**
+    1.  Start the MCP server: `python mcp/server.py`
+    2.  Run the ADK agent: `adk run adk-agent`
+-   **Key Learnings:** The ADK provides a state-of-the-art, "zero-code" approach to tool integration when connecting to a standard MCP endpoint, handling all discovery and orchestration automatically.
 
-## Key Learnings & Decisions
+### 5. `adk-mcp` - Declarative Agent (Local Tools)
 
-- This project demonstrates a powerful pattern for bundling tools directly with an agent, removing the need for a separate, networked server process. This simplifies deployment and reduces network latency.
-- The original `wikipedia-mcp` code from the GitHub repository was incomplete (missing the client and a main execution block), so a mock client and a runner were created to make the example functional for demonstration purposes.
+-   **Project Overview:** An ADK agent that demonstrates loading tools from local scripts via standard input/output (stdio), removing the need for a networked server.
+-   **Key Files:**
+    -   `agent.py`: Defines an ADK agent with multiple `StdioServerParameters` toolsets.
+    -   `mcp_profile.py`: A local Python script providing a custom tool, launched as a subprocess by the agent.
+-   **How to Run:**
+    ```bash
+    # From the adk-mcp directory
+    adk run .
+    ```
+-   **Key Learnings:** This pattern is powerful for bundling tools directly with an agent, simplifying deployment and reducing latency. It can dynamically load tools from different languages/packages (e.g., Python scripts, `npx` packages).
 
----
-## Context from: tool/GEMINI.md
----
+### 6. `baios` - Agentic Workflow Engine
 
-# Gemini Project State
+-   **Project Overview:** "Basic AI Operating System," a proof-of-concept for a middleware platform that runs agentic workflows defined in BPMN (Business Process Model and Notation).
+-   **Key Files:**
+    -   `WorkflowGameGenerator.bpmn`: The workflow definition, viewable in tools like `bpmn.io`.
+    -   `baios.py`: The main orchestrator that uses the `SpiffWorkflow` library to parse and execute the BPMN file.
+    -   `agent_storyline.py`: A plain Python class that acts as an "agent" invoked by a task in the workflow.
+-   **Key Learnings:** BPMN provides a visual, structured way to define complex agent interactions. `SpiffWorkflow` is a lightweight Python engine capable of executing these definitions and orchestrating the calls to agent-like Python objects.
 
-This file summarizes the final state of the project for the Gemini agent.
+### 7. `ai-bob-realtime` - Real-Time Voice App
 
-## Project Overview
-
-The user's goal was to explore and create proofs-of-concept for using LLM agent tools with a locally running Ollama model (`llama3.2`). We successfully created two parallel implementations using LangChain and LlamaIndex.
-
-## Final File Structure
-
-- `langchain.py`: A working POC using LangChain's `ChatOpenAI` client pointed at the local Ollama OpenAI-compatible endpoint. It uses a tool-calling agent to perform addition.
-- `llamaindex.py`: A working POC using LlamaIndex's native `llama-index-llms-ollama` integration. It uses a `ReActAgent` to perform addition.
-- `requirements.txt`: Contains all necessary dependencies for both `langchain` and `llama-index` implementations.
-- `README.md`: Provides setup and usage instructions for a human developer.
-- `.venv/`: The Python virtual environment.
-
-## Key Learnings & Decisions
-
-- **Initial Failures with `ollama` library:** The initial attempts using the base `ollama` Python library for tool calling were unsuccessful due to API mismatches.
-- **LangChain `create_tool_calling_agent`:** This modern LangChain agent requires a model that supports the `.bind_tools()` method. The native `langchain-ollama` integration does not support this. The successful workaround was to use the `langchain-openai` package and point the `ChatOpenAI` client to Ollama's OpenAI-compatible endpoint (`http://localhost:11434/v1`).
-- **LlamaIndex `OpenAIAgent`:** A similar issue occurred with LlamaIndex's `OpenAIAgent`, which made hardcoded assumptions about OpenAI models (like `context_window` size).
-- **LlamaIndex Native Integration:** The most robust solution for LlamaIndex was to use the dedicated `llama-index-llms-ollama` package. This required using the `ReActAgent` as it's designed for this direct, prompt-based integration, avoiding the need for special model API features.
-- **Deprecation Warnings:** We addressed several deprecation warnings, particularly in LlamaIndex, by updating to the modern `ReActAgent` class from the `llama_index.core.agent.react.workflow` module.
-- **Virtual Environment:** All dependencies were installed and managed within the user-specified virtual environment at `C:\Users\gabor.czigola\src\ai\.venv`.
+-   **Project Overview:** A single-page web application for real-time, bidirectional voice and text conversations with OpenAI's Realtime API.
+-   **Architecture:**
+    -   **Frontend (`/public`):** Handles all real-time logic using native browser `RTCPeerConnection` APIs. It does **not** use the `openai` JS SDK.
+    -   **Backend (`server.js`):** A minimal Node.js server with a single purpose: securely vending ephemeral API keys to the frontend to avoid exposing the permanent key.
+-   **Key Learnings:** This project demonstrates the correct and secure architectural pattern for building browser-based WebRTC applications with OpenAI's Realtime API, emphasizing a "thick client" and a minimal, security-focused backend.

@@ -1,0 +1,11 @@
+[
+    {"type": "mcp", "server_label": "remote-deepwiki", "server_url": "https://mcp.deepwiki.com/mcp", "require_approval": "never"}, 
+    {"type": "function", "name": "bye", "description": "Call this function to end the conversation.", 
+        "parameters": {"type": "object", "properties": {
+        }, "required": [], "additionalProperties": false},"strict": true},
+    {"type": "function", "name": "get-page", "description": "Returns the standard page object for a wiki page, optionally including page source or rendered HTML, and including the license and information about the latest revision.",
+        "parameters": {"type": "object", "properties": {
+            "title": {"type": "string", "description": "Wiki page title"}, 
+            "content": {"type": "string", "enum": ["noContent", "withSource", "withHtml"], "description": "Format of the page content to retrieve", "default": "noContent"}
+        }, "required": ["title"], "additionalProperties": false}, "strict": true}
+]

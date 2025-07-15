@@ -30,6 +30,7 @@ def get_profile(name: str) -> Generator[types.TextContent, None, None]:
         yield types.TextContent(type='text', text=word)
     log.info("Finished streaming for 'get_profile'")
 
+
 if __name__ == "__main__":
     log.info("Starting MCP Profile Server on port 8181...")
     mcp.run(transport="streamable-http")

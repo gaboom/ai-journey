@@ -7,3 +7,9 @@
 [submodule "baios"]
 	path = baios
 	url = https://github.com/gaboom/baios
+[submodule "mcp/mediawiki-mcp-server"]
+	path = mcp/mediawiki-mcp-server
+	url = https://github.com/ProfessionalWiki/MediaWiki-MCP-Server
+[submodule "mcp/inspector"]
+	path = mcp/inspector
+	url = https://github.com/modelcontextprotocol/inspector
