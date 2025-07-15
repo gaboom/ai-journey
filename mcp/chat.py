@@ -12,20 +12,20 @@ Requirements:
 import base64
 import json
 import os
-from pickle import FALSE
 import sys
 import traceback
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Union
+from halo import Halo
 
 from mcp import StdioServerParameters, types
 import openai
 from openai.types.responses import Response, ResponseInputItemParam, ResponseInputParam, WebSearchToolParam
 from openai.types.responses.function_tool_param import FunctionToolParam
 from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
-from openai.types.responses.response_input_param import FunctionCallOutput, ImageGenerationCall
+from openai.types.responses.response_input_param import FunctionCallOutput
 from openai.types.responses.tool_param import Mcp, ToolParam, ImageGeneration
 
-from mcp_client_agent import HttpServerParameters, McpClientAgent, ToolFunctionCall, ToolFunctionArguments, ToolFunctionResult
+from mcp_client_agent import HttpServerParameters, McpClientAgent, ToolFunctionCall, ToolFunctionResult
 
 class Agent:
     """
@@ -113,13 +113,17 @@ class Agent:
 
     def _create_response(self, input: Union[str, ResponseInputParam]):
         """Utility method to create a response from the OpenAI client given user input."""
-        return self.client.responses.create(
-            model=self.MODEL,
-            tools=self.TOOLS,
-            input=input,
-            instructions=self.INSTRUCTIONS,
-            previous_response_id=self.last_response_id
-        )
+        with Halo(spinner='dots') as spinner:
+            return self.client.responses.create(
+                background=False,
+                stream=False,
+                model=self.MODEL,
+                instructions=self.INSTRUCTIONS,
+                tools=self.TOOLS,
+                input=input,
+                store=True,
+                previous_response_id=self.last_response_id
+            )
 
     def _handle_function_result(self, functionCall: ResponseFunctionToolCall, result: ToolFunctionResult) -> FunctionCallOutput:
         """Handles a function result from the model's response."""
