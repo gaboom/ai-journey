@@ -3,10 +3,14 @@ Defines a reusable MCPClientAgent for interacting with MCP servers.
 This version uses separate connection manager classes for stdio and http.
 """
 import asyncio
+from datetime import timedelta
+from functools import partial
 import traceback
 from contextlib import _AsyncGeneratorContextManager
-from typing import List, Dict, Any, Union, Optional, Callable
+from typing import List, Dict, Any, Union, Optional, Protocol
 
+from mcp.shared.session import ProgressFnT
+from pydantic import BaseModel
 from mcp import ClientSession, types
 from mcp.client.streamable_http import streamablehttp_client, GetSessionIdCallback
 from mcp.client.stdio import stdio_client, StdioServerParameters
@@ -16,7 +20,15 @@ from openai.types.responses.function_tool_param import FunctionToolParam
 
 # --- Server Configuration Types ---
 
-McpServerParameters = Union[StdioServerParameters, str]
+class HttpServerParameters(BaseModel): # for some reason the mcp guys did not define this type
+    url: str
+    headers: dict[str, str] | None = None
+    timeout: float | timedelta = 30
+    sse_read_timeout: float | timedelta = 60 * 5
+    terminate_on_close: bool = True
+
+McpServerParameters = Union[StdioServerParameters, HttpServerParameters]
+
 McpClientAsync = Union[
     _AsyncGeneratorContextManager[
         tuple[
@@ -32,10 +44,18 @@ McpClientAsync = Union[
         ]
     ],  # sse
 ]
-McpToolParameters = Dict[str, Any]
-McpToolResponse = types.CallToolResult
-McpToolCall = Callable[[McpToolParameters], McpToolResponse]
 
+ToolFunctionArguments = Dict[str, Any]
+ToolFunctionResult = types.CallToolResult
+class ToolFunctionCall(Protocol):
+    """A protocol for a callable that executes a tool, matching the signature of `McpClientAgent.call_tool`."""
+    def __call__(
+        self,
+        arguments: ToolFunctionArguments,
+        read_timeout_seconds: Optional[timedelta] = None,
+        progress_callback: Optional[ProgressFnT] = None,
+    ) -> ToolFunctionResult:
+        ...
 
 # --- Connection Manager Classes ---
 
@@ -53,8 +73,8 @@ class McpClientSession:
             client = stdio_client(server=self._server_params)
             self._client = client
             read, write = await client.__aenter__()
-        elif isinstance(self._server_params, str):
-            client = streamablehttp_client(url=self._server_params) # TODO implement additional parameters, maybe a dict not a str
+        elif isinstance(self._server_params, HttpServerParameters):
+            client = streamablehttp_client(**self._server_params.model_dump())
             self._client = client
             read, write, _ = await client.__aenter__()
         else:
@@ -105,20 +125,20 @@ class McpClientAgent:
         """Returns all discovered tools in OpenAI's function format."""
         return asyncio.run(self._get_tools())
 
-    async def _call_tool(self, name: str, arguments: McpToolParameters) -> McpToolResponse: 
+    async def _call_tool(self, name: str, arguments: ToolFunctionArguments, read_timeout_seconds: timedelta | None = None, progress_callback: ProgressFnT | None = None) -> ToolFunctionResult: 
         async with McpClientSession(self._server_params) as session:
                 await session.initialize()
-                return await session.call_tool(name, arguments) # TODO timeout etc. parameters
+                return await session.call_tool(name, arguments, read_timeout_seconds, progress_callback)
 
-    def call_tool(self, name: str, arguments: McpToolParameters) -> McpToolResponse:
+    def call_tool(self, name: str, arguments: ToolFunctionArguments, read_timeout_seconds: timedelta | None = None, progress_callback: ProgressFnT | None = None) -> ToolFunctionResult:
         """Calls a tool by name with the given arguments."""
-        return asyncio.run(self._call_tool(name, arguments))
+        return asyncio.run(self._call_tool(name, arguments, read_timeout_seconds, progress_callback))
     
-    def get_function(self, name: str) -> McpToolCall:
+    def get_function(self, name: str) -> ToolFunctionCall:
         """Returns a function that calls a tool by name with the given arguments."""
-        return (lambda args: self.call_tool(name, args))
+        return partial(self.call_tool, name)
 
-    def get_functions(self) -> Dict[str, McpToolCall]:
+    def get_functions(self) -> Dict[str, ToolFunctionCall]:
         # TODO: use typing.ParamSpec to make this more flexible
         """
         Returns a mapping from each tool's name to a lambda function that calls the tool with the given arguments.
@@ -136,7 +156,9 @@ def main():
     print("--- MCPClientAgent HTTP Demo ---")
     
     try:
-        agent = McpClientAgent("http://localhost:9999/mcp") # http
+        agent = McpClientAgent(HttpServerParameters(
+            url="http://localhost:9999/mcp"
+            )) # http
         agent = McpClientAgent(StdioServerParameters(
             command="npx",
             args=["-y", "@professional-wiki/mediawiki-mcp-server@latest"],
@@ -151,7 +173,10 @@ def main():
         print(f"\n[Demo] Tool call result:\n{tool_call_result}")
 
         print("\n[Demo] Attempting to call function 'get-page'...")
-        function_call_result = agent.get_functions()['get-page']({"title": "Set_Sail", "content": "withSource"})
+        function = agent.get_functions()['get-page']
+        function_call_result = function(
+            {"title": "Set_Sail", "content": "withSource"}
+        )
         print(f"\n[Demo] Function call result:\n{function_call_result}")
 
     except Exception as e:

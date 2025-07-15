@@ -12,14 +12,16 @@ Tools/Functions facility
 * [tool/llamaindex.py](tool/llamaindex.py): POC tool use in LlamaIndex
 
 Model Context Protocol
----
+--- 
 * [mcp/server.py](mcp/server.py): POC MCP Server, HTTP Streaming example
 * [mcp/client.py](mcp/client.py): POC MCP client to test the server (also verified by https://github.com/modelcontextprotocol/inspector)
 * [mcp/mcp_client.py](mcp/mcp_client.py): POC using LangChain and experimental SCP server discovery [mcp/mcp_toolkit.py](mcp/mcp_toolkit.py) and universal dispatcher [mcp/mcp_tool.py](mcp/mcp_tool.py). Demonstrates realtime streaming ability.
 * [mcp-profile/mcp_profile.py](mcp-profile/mcp_profile.py): A simple, stdio-based MCP server with a single tool.
 
 Agentic MCP:
-* [mcp/chat.py](mcp/chat.py)
+
+* [mcp/mcp_client_agent.py](mcp/mcp_client_agent.py) McpClientAgent and McpClientAsync implementations to serve local tools (stdio/http) for OpenAI API, i.e., discover tools, wrap each into a function declaration, call tool API. (Because it only supports remote MCP servers in the responses API.)
+* [mcp/chat.py](mcp/chat.py) CLI-based conversation with several tools configured (local/remote MCPs, terminator function, image generation, etc.).
 
 Agentic Workflow
 ---

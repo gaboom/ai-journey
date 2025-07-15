@@ -14,6 +14,7 @@ import json
 import os
 from pickle import FALSE
 import sys
+import traceback
 from typing import List, Optional, Sequence, Union
 
 from mcp import StdioServerParameters, types
@@ -24,7 +25,7 @@ from openai.types.responses.response_function_tool_call import ResponseFunctionT
 from openai.types.responses.response_input_param import FunctionCallOutput, ImageGenerationCall
 from openai.types.responses.tool_param import Mcp, ToolParam, ImageGeneration
 
-from mcp_client_agent import McpClientAgent, McpToolCall, McpToolParameters, McpToolResponse
+from mcp_client_agent import HttpServerParameters, McpClientAgent, ToolFunctionCall, ToolFunctionArguments, ToolFunctionResult
 
 class Agent:
     """
@@ -36,7 +37,7 @@ class Agent:
         self.MODEL: str = "gpt-4.1" 
         self.INSTRUCTIONS: str = "You are an agent of delight. Use the tools provided."
         self.TOOLS: List[ToolParam] = []
-        self.FUNCTIONS: dict[str, McpToolCall] = {}
+        self.FUNCTIONS: dict[str, ToolFunctionCall] = {}
 
         # --- Tool Definitions ---
 
@@ -77,7 +78,8 @@ class Agent:
             args=["-y", "@professional-wiki/mediawiki-mcp-server@latest"],
             env=None,
         )) # stdio
-        local_mcp_agent = McpClientAgent("http://localhost:9999/mcp") # http
+        # MCP_TRANSPORT=http PORT=9999 npx -y @professional-wiki/mediawiki-mcp-server@latest
+        local_mcp_agent = McpClientAgent(HttpServerParameters(url="http://localhost:9999/mcp")) # http
         LOCAL_STDIO_TOOLS:List[FunctionToolParam] = local_mcp_agent.get_tools()
         self.TOOLS.extend(LOCAL_STDIO_TOOLS)
         self.FUNCTIONS.update(local_mcp_agent.get_functions())
@@ -119,7 +121,7 @@ class Agent:
             previous_response_id=self.last_response_id
         )
 
-    def _handle_function_result(self, functionCall: ResponseFunctionToolCall, result: McpToolResponse) -> FunctionCallOutput:
+    def _handle_function_result(self, functionCall: ResponseFunctionToolCall, result: ToolFunctionResult) -> FunctionCallOutput:
         """Handles a function result from the model's response."""
         return FunctionCallOutput(
             type="function_call_output",
@@ -129,7 +131,7 @@ class Agent:
 
     def _handle_function_call(self, functionCall: ResponseFunctionToolCall) -> FunctionCallOutput:
         """Handles a function call from the model's response."""
-        function: McpToolCall = self.FUNCTIONS[functionCall.name]
+        function: ToolFunctionCall = self.FUNCTIONS[functionCall.name]
         result = function(json.loads(functionCall.arguments))
         print(f"[system] function='{functionCall}' result='{result}'", flush=True)
         return self._handle_function_result(functionCall, result)
@@ -155,13 +157,13 @@ class Agent:
                 if getattr(item, 'type', None) == 'function_call':
                     function_call = ResponseFunctionToolCall.model_validate(item)
                     function_results.append(self._handle_function_call(function_call))
-        if len(function_results) > 0:
+        if function_results:
             response = self._create_response(function_results)
             self._handle_response(response) # recursion for the win
 
-    def terminate(self, _: McpToolParameters) -> McpToolResponse:
+    def terminate(self, *_, **__) -> ToolFunctionResult:
             self.RUNNING = False
-            return McpToolResponse(
+            return ToolFunctionResult(
                 content=[types.TextContent(type="text", text="Conversation shall end.")],
                 structuredContent=None,
                 isError=False
@@ -185,13 +187,15 @@ class Agent:
 
                 except openai.APIError as e:
                     sys.stderr.write(f"OpenAI API Error: {e}\n")
+                    sys.stderr.write(f"Traceback:\n{traceback.format_exc()}\n")
                 except Exception as e:
                     sys.stderr.write(f"An unexpected error occurred: {e}\n")
+                    sys.stderr.write(f"Traceback:\n{traceback.format_exc()}\n")
 
             except (KeyboardInterrupt, EOFError):
                 self.RUNNING = False
         
-        print("[system] EOL", flush=True)
+        print("", flush=True)
 
 def main() -> None:
     """
