@@ -32,6 +32,9 @@ class Agent:
     An agent that uses the OpenAI responses API to interact with the user
     and handle tool calls.
     """
+    
+    ResponseInput = Union[str | ResponseInputParam]
+    
     def __init__(self) -> None:
         # --- Configuration ---
         self.MODEL: str = "gpt-4.1" 
@@ -111,18 +114,18 @@ class Agent:
             sys.stderr.write(f"Error initializing OpenAI client: {e}\n")
             sys.exit(1)
 
-    def _create_response(self, input: Union[str, ResponseInputParam]):
+    def _create_response(self, input: ResponseInput):
         """Utility method to create a response from the OpenAI client given user input."""
         with Halo(spinner='dots') as spinner:
             return self.client.responses.create(
                 background=False,
                 stream=False,
+                store=True,
                 model=self.MODEL,
                 instructions=self.INSTRUCTIONS,
                 tools=self.TOOLS,
                 input=input,
-                store=True,
-                previous_response_id=self.last_response_id
+                previous_response_id=self.last_response_id,
             )
 
     def _handle_function_result(self, functionCall: ResponseFunctionToolCall, result: ToolFunctionResult) -> FunctionCallOutput:
